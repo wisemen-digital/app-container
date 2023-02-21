@@ -4,7 +4,7 @@ import express, { Express } from 'express'
 import { register } from './metrics'
 
 export abstract class AppContainer {
-  protected readonly app: Express = express()
+  public readonly app: Express = express()
 
   private state: 'starting' | 'ready' | 'shutdown' | 'unknown'
   private server?: http.Server

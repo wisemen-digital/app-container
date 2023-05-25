@@ -9,15 +9,17 @@ export abstract class AppContainer {
   private state: 'starting' | 'ready' | 'shutdown' | 'unknown'
   private server?: http.Server
 
-  constructor () {
+  constructor (gracefully = true) {
     console.log('starting server')
 
     this.state = 'starting'
 
-    process.on('SIGTERM', () => { void this.destroy() })
-    process.on('SIGINT', () => { void this.destroy() })
-    process.on('SIGUSR2', () => { void this.destroy() })
-    process.on('SIGHUP', () => { void this.destroy() })
+    if (gracefully) {
+      process.on('SIGTERM', () => { void this.destroy() })
+      process.on('SIGINT', () => { void this.destroy() })
+      process.on('SIGUSR2', () => { void this.destroy() })
+      process.on('SIGHUP', () => { void this.destroy() })
+    }
 
     void this.up().then(() => { void this.initialize() })
   }
@@ -97,7 +99,10 @@ export abstract class AppContainer {
   private version (res: ServerResponse): void {
     res.writeHead(200, { 'Content-Type': 'application/json' })
     res.write(JSON.stringify({
-      env: process.env.NODE_ENV
+      env: process.env.NODE_ENV,
+      commit: process.env.COMMIT,
+      build: process.env.BUILD_NUMBER,
+      version: process.env.VERSION
     }))
     res.end()
   }

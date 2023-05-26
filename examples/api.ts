@@ -1,11 +1,11 @@
 import express, { Express } from 'express'
-import { AppContainer } from '@appwise/app-container'
+import { ApiContainer } from '@appwise/app-container'
 
 function init (_app: Express): void {
   // sentry stuff
 }
 
-class App extends AppContainer {
+class App extends ApiContainer {
   async up (): Promise<void> {
     // do stuff
   }

@@ -1,16 +1,16 @@
 /* eslint-disable no-console */
-import http, { ServerResponse } from 'http'
-import express, { Express } from 'express'
-import { register } from './metrics'
 
-export abstract class AppContainer {
+import { type Server, type ServerResponse } from 'http'
+import express, { type Express } from 'express'
+import { register } from '../metrics'
+
+export abstract class DefaultContainer {
   public readonly app: Express = express()
-
   private state: 'starting' | 'ready' | 'shutdown' | 'unknown'
-  private server?: http.Server
+  private server?: Server
 
-  constructor (gracefully = true) {
-    console.log('starting server')
+  constructor (type: 'job' | 'worker' | 'api', gracefully = true) {
+    console.log(`starting ${type}`)
 
     this.state = 'starting'
 
@@ -20,21 +20,16 @@ export abstract class AppContainer {
       process.on('SIGUSR2', () => { void this.destroy() })
       process.on('SIGHUP', () => { void this.destroy() })
     }
-
-    void this.up().then(() => { void this.initialize() })
   }
 
   abstract up (): Promise<void>
   abstract down (): Promise<void>
-  abstract populate (app: Express): void
 
-  protected async initialize (): Promise<void> {
-    this.app.get('/', (_, res) => this.version(res))
-    this.app.get('/health', (_, res) => this.liveness(res))
-    this.app.get('/ready', (_, res) => this.readiness(res))
-    this.app.get('/metrics', (_, res) => this.metrics(res))
-
-    this.populate(this.app)
+  protected initialize (): void {
+    this.app.get('/', (_, res) => { this.version(res) })
+    this.app.get('/health', (_, res) => { this.liveness(res) })
+    this.app.get('/ready', (_, res) => { this.readiness(res) })
+    this.app.get('/metrics', (_, res) => { this.metrics(res) })
 
     this.server = this.app.listen(process.env.PORT ?? 3000, () => {
       console.log('server started')
@@ -43,7 +38,7 @@ export abstract class AppContainer {
     })
   }
 
-  private async destroy (): Promise<void> {
+  protected async destroy (): Promise<void> {
     console.log('shutting down server')
 
     this.state = 'shutdown'

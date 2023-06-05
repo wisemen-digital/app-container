@@ -43,13 +43,15 @@ export abstract class DefaultContainer {
 
     this.state = 'shutdown'
 
-    await this.down()
-
-    this.server?.close(() => {
-      void this.down().finally(() => {
-        console.log('server shutdown')
+    if (this.server == null) {
+      await this.down()
+    } else {
+      this.server?.close(() => {
+        void this.down().finally(() => {
+          console.log('server shutdown')
+        })
       })
-    })
+    }
   }
 
   private liveness (res: ServerResponse): void {

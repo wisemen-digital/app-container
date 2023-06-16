@@ -1,15 +1,22 @@
 /* eslint-disable no-console */
 
 import { type Server, type ServerResponse } from 'http'
+import { EventEmitter } from 'stream'
 import express, { type Express } from 'express'
 import { register } from '../metrics'
 
-export abstract class DefaultContainer {
+export declare interface DefaultContainer {
+  on: (event: 'mounted', listener: (server: Server) => void) => this
+}
+
+export abstract class DefaultContainer extends EventEmitter {
   public readonly app: Express = express()
+  protected server?: Server
   private state: 'starting' | 'ready' | 'shutdown' | 'unknown'
-  private server?: Server
 
   constructor (type: 'job' | 'worker' | 'api', gracefully = true) {
+    super()
+
     console.log(`starting ${type}`)
 
     this.state = 'starting'
@@ -36,6 +43,8 @@ export abstract class DefaultContainer {
 
       this.state = 'ready'
     })
+
+    this.emit('mounted', this.server)
   }
 
   protected async destroy (): Promise<void> {
